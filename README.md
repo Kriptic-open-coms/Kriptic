@@ -1,5 +1,7 @@
 # Kriptic
 
+[![Figma](https://shields.io)](PASTE_YOUR_FIGMA_LINK_HERE)
+
 **A phone-only, off-grid safety toolkit for people at protests when cellular and internet infrastructure is deliberately shut down.**
 
 No internet. No cell service. No external hardware. Just the phones already in people's pockets, talking to each other directly.
