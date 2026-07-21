@@ -1,10 +1,7 @@
 package com.kriptic.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
-import com.kriptic.app.R
 
 /**
  * DESIGN TOKENS — the single place to configure Kriptic's visual identity.
@@ -39,16 +36,13 @@ object DesignTokens {
     // Default: Inter. To change, drop new .ttf files into res/font/ and
     // update the FontFamily below — nothing else needs to change.
     //
-    // NOTE: This file assumes Inter's variable/static .ttf files have been
-    // placed in app/src/main/res/font/ as:
+    // NOTE: To use Inter, download the .ttf files from
+    // https://fonts.google.com/specimen/Inter and place in res/font/ as:
     //   inter_regular.ttf, inter_medium.ttf, inter_semibold.ttf
-    // Download from https://fonts.google.com/specimen/Inter (Open Font License).
-    // ------------------------------------------------------------------
-    val AppFontFamily = FontFamily(
-        Font(R.font.inter_regular, FontWeight.Normal),
-        Font(R.font.inter_medium, FontWeight.Medium),
-        Font(R.font.inter_semibold, FontWeight.SemiBold),
-    )
+    // Then uncomment the FontFamily below and remove this line.
+    // For now, uses the system default font (Roboto on most Androids).
+
+    val AppFontFamily = FontFamily.Default
 
     // ------------------------------------------------------------------
     // SPACING SCALE (8dp base unit) — reference these instead of magic numbers
