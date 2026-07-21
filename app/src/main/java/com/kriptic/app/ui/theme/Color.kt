@@ -2,6 +2,13 @@ package com.kriptic.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
+/**
+ * Derived palette. Neutrals are off-black/off-white by design (see
+ * docs/04_DESIGN_SYSTEM.md — no pure #000000 or #FFFFFF backgrounds/text).
+ * Accent values pull from DesignTokens so there is exactly one source of
+ * truth for the brand color.
+ */
+
 // Neutrals — Dark theme (default)
 val DarkBackground = Color(0xFF121212)
 val DarkSurface = Color(0xFF1B1B1E)

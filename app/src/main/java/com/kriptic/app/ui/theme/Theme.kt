@@ -33,6 +33,14 @@ private val KripticLightColors = lightColorScheme(
     error = Danger,
 )
 
+/**
+ * Root theme wrapper. Dark mode is the default per docs/04_DESIGN_SYSTEM.md
+ * (battery/OLED + night-use considerations), but follows system setting
+ * unless [forceDark] is explicitly passed.
+ *
+ * Usage: wrap your app content once, at the top level:
+ *   KripticTheme { KripticApp() }
+ */
 @Composable
 fun KripticTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),

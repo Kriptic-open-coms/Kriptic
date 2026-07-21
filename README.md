@@ -8,41 +8,52 @@ No internet. No cell service. No external hardware. Just the phones already in p
 
 ## The problem
 
-When authorities shut down mobile networks and internet access during protests, they cut off far more than social media — they cut off the ability to coordinate safely, find medical help, warn others of danger, and reach legal support. Kriptic exists to restore that baseline capability using only what a stock Android phone already has: Bluetooth, Wi-Fi radios, GPS, and local storage.
+When authorities shut down mobile networks and internet access during protests, they cut off far more than social media — they cut off the ability to coordinate safely, warn others of danger, find help, and access basic legal and medical knowledge. Kriptic restores that baseline capability using only what a stock Android phone already has: Bluetooth, Wi-Fi radios, GPS, and local storage.
 
-## What Kriptic does
+## What Kriptic does (v1)
 
 | Pillar | What it actually does |
 |---|---|
-| **Mesh Comms** | Encrypted peer-to-peer messaging over Bluetooth/Wi-Fi Direct, hopping device to device with no internet or cell tower required |
-| **Offline Map** | Pre-downloaded street map with live, crowd-sourced hazard pins (police lines, blocked roads, safe zones) shared over the mesh |
-| **Silent SOS** | One hardware-button press broadcasts your location + status to your group, no need to unlock the phone |
-| **Panic Wipe & Disguise** | Instantly destroys local data and disguises the app as a calculator on the home screen |
-| **Offline Know-Your-Rights** | Searchable legal and first-aid reference, works fully offline |
+| **Identity** | A one-time username, chosen on first launch, tied to a locally generated keypair. No phone number, no account, no server-side registration. Usernames can't collide and can't be changed. |
+| **Mesh Comms** | Encrypted peer-to-peer messaging over Bluetooth LE mesh, hopping device to device with no internet or cell tower required. Organized into **channels** (General, Priority, Danger/Alert, Information, ...). |
+| **Offline Map** | A pre-bundled, high-detail offline map of the Delhi NCR region — streets, landmarks, shop names, and POIs from OpenStreetMap data — with no download step needed at runtime. |
+| **Marker System** | Drop a typed pin on the map (Danger, Safe, Police, Help, Gather, ...) with an optional description. Pins broadcast over the mesh so the whole crowd sees them, and expire automatically so stale data doesn't mislead people. |
+| **Silent SOS** | A fast, low-friction trigger that broadcasts your location and status to nearby peers and asks for help — no need to fully unlock or navigate the app. |
+| **Panic Wipe** | Instantly destroys local data. No confirmation dialog — the trigger *is* the confirmation. |
+| **Knowledge Base** | A searchable, offline first-aid and know-your-rights reference for protest contexts (tear gas exposure, wound care, arrest/detention rights, etc.), organized by the same channel-style categories as the rest of the app. |
 
 ## What Kriptic is not
 
 - Not a chat app that "also works offline sometimes" — offline-first is the whole architecture, not a fallback mode.
 - Not dependent on any server we control. If our backend disappears, the app still works, because there is no backend in the critical path.
-- Not carrying an on-device LLM in v1. We deliberately cut this — see `docs/03_SCOPE.md` for why.
+- Not carrying an on-device LLM in v1. The Knowledge tab ships as static, indexed, offline content in v1; an on-device LLM interface is an explicit v2 candidate — see `docs/03_SCOPE.md`.
 
 ## Read next
 
-1. `docs/01_ARCHITECTURE.md` — what we're building on top of, and why each piece was chosen
-2. `docs/02_PROJECT_STRUCTURE.md` — the actual folder/module layout for the Android Studio / Antigravity project
-3. `docs/03_SCOPE.md` — explicit build / don't-build list, so nobody wanders mid-sprint
-4. `docs/04_DESIGN_SYSTEM.md` — the visual language (Framer-inspired, one configurable accent color, one configurable font)
-5. `docs/05_BUILD_PLAN.md` — hour-by-hour execution plan with tickets ready to hand to Gemini
+1. [`docs/00_BRIEF.md`](docs/00_BRIEF.md) — the project brief: problem, users, principles, success criteria
+2. [`docs/01_ARCHITECTURE.md`](docs/01_ARCHITECTURE.md) — what we're building on top of (fork of bitchat-android) and why
+3. [`docs/02_PROJECT_STRUCTURE.md`](docs/02_PROJECT_STRUCTURE.md) — the monorepo layout
+4. [`docs/03_SCOPE.md`](docs/03_SCOPE.md) — explicit build / don't-build-yet list for v1
+5. [`docs/04_DESIGN_SYSTEM.md`](docs/04_DESIGN_SYSTEM.md) — the visual language
+6. [`docs/05_ROADMAP.md`](docs/05_ROADMAP.md) — v1 → v2 → v3 milestones
+7. [`docs/06_THIRD_PARTY.md`](docs/06_THIRD_PARTY.md) — every open-source project we build on, fork, or reference, and why
+8. [`CONTRIBUTING.md`](CONTRIBUTING.md) — how to get set up and send a PR
+9. [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
 
 ## Tech stack summary
 
+- **Base:** fork of [bitchat-android](https://github.com/permissionlesstech/bitchat-android) (Kotlin, Jetpack Compose, Material 3, MIT), stripped to its mesh + crypto core and rebuilt on top of
 - **Language:** Kotlin
-- **UI:** Jetpack Compose + Material 3 (custom-themed, not default Material look)
-- **Mesh transport:** Android Nearby Connections API (Google Play Services — peer-to-peer, offline, encrypted; NOT the deprecated Nearby Messages API)
-- **Maps:** MapLibre Native Android SDK + offline PMTiles/MBTiles vector tiles
-- **Local storage:** Jetpack Room + SQLCipher (encrypted at rest), wiped on panic trigger
-- **Min SDK:** 26 (Android 8.0) — covers the vast majority of real-world devices while keeping access to modern Bluetooth/crypto APIs
+- **UI:** Jetpack Compose + Material 3, custom-themed (see `docs/04_DESIGN_SYSTEM.md`)
+- **Mesh transport:** Bluetooth LE mesh (inherited from bitchat's transport layer), multi-hop store-and-forward relay
+- **Maps:** MapLibre Native Android SDK + offline PMTiles vector tiles built from OpenStreetMap Delhi NCR extracts
+- **Local storage:** Room + SQLCipher (encrypted at rest), wiped on panic trigger
+- **Min SDK:** 26 (Android 8.0)
 
-## License note
+## License
 
-Kriptic itself should be released under a permissive or copyleft license consistent with the libraries it depends on (MapLibre is BSD-2-Clause; check Nearby Connections' Play Services ToS since it's a Google proprietary SDK, not open source — this matters for any redistribution claims in your pitch).
+MIT — see [`LICENSE`](LICENSE). This matches the license of bitchat-android, the codebase Kriptic is forked from. Map data bundled with the app is derived from OpenStreetMap and is separately licensed under the **Open Database License (ODbL)**, which requires attribution and share-alike on the *data*, not the code — see `docs/06_THIRD_PARTY.md` for the exact attribution text to keep in the app.
+
+## Status
+
+Early-stage, active development. Not yet ready for real-world reliance — see `docs/03_SCOPE.md` for what's actually load-bearing today versus planned.
