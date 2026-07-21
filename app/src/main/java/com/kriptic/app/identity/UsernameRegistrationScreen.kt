@@ -13,7 +13,7 @@ import com.kriptic.app.ui.theme.DesignTokens
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UsernameRegistrationScreen(
-    onIdentityCreated: (Identity) -> Unit
+    onIdentityCreated: (String) -> Unit
 ) {
     var username by remember { mutableStateOf(TextFieldValue("")) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -82,7 +82,7 @@ fun UsernameRegistrationScreen(
                         return@Button
                     }
                     isLoading = true
-                    onIdentityCreated(Identity(name, ByteArray(32), ByteArray(64)))
+                    onIdentityCreated(name)
                 },
                 enabled = !isLoading && username.text.trim().length >= 3,
                 modifier = Modifier

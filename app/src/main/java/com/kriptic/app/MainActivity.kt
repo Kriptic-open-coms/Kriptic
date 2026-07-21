@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.kriptic.app.identity.Identity
+import com.kriptic.app.identity.IdentityRepository
 import com.kriptic.app.identity.UsernameRegistrationScreen
 import com.kriptic.app.ui.nav.KripticNavHost
 import com.kriptic.app.ui.theme.KripticTheme
@@ -16,8 +17,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val app = application as KripticApplication
-        val identity = app.identityRepository.getIdentity()
+        val repo = (application as KripticApplication).identityRepository
+        val identity = repo.getIdentity()
 
         setContent {
             KripticTheme {
@@ -26,9 +27,8 @@ class MainActivity : ComponentActivity() {
                         KripticNavHost(identity = identity)
                     } else {
                         UsernameRegistrationScreen(
-                            onIdentityCreated = { newIdentity ->
-                                val repo = (application as KripticApplication).identityRepository
-                                repo.createIdentity(newIdentity.username)
+                            onIdentityCreated = { username ->
+                                repo.createIdentity(username)
                                 recreate()
                             }
                         )
