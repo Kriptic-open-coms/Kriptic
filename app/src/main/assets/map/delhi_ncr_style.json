@@ -1,0 +1,40 @@
+{
+  "version": 8,
+  "name": "Kriptic Delhi NCR Dark Map",
+  "center": [77.2090, 28.6139],
+  "zoom": 13,
+  "sources": {
+    "delhi_ncr": {
+      "type": "vector",
+      "url": "asset://map/delhi_ncr.pmtiles"
+    }
+  },
+  "layers": [
+    {
+      "id": "background",
+      "type": "background",
+      "paint": {
+        "background-color": "#121212"
+      }
+    },
+    {
+      "id": "water",
+      "type": "fill",
+      "source": "delhi_ncr",
+      "source-layer": "water",
+      "paint": {
+        "fill-color": "#1c2b36"
+      }
+    },
+    {
+      "id": "roads",
+      "type": "line",
+      "source": "delhi_ncr",
+      "source-layer": "transportation",
+      "paint": {
+        "line-color": "#2a2a30",
+        "line-width": 2
+      }
+    }
+  ]
+}

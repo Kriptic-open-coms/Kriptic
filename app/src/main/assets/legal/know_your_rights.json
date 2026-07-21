@@ -1,0 +1,23 @@
+[
+  {
+    "id": "legal_1",
+    "category": "LEGAL",
+    "title": "Right to Remain Silent & Arrest Protocol",
+    "summary": "You are not obligated to answer questions beyond state mandatory identity verification.",
+    "content": "1. Silence: You have the right to remain silent. State clearly: 'I am exercising my right to remain silent and I want to speak to a lawyer.'\n2. Mandatory Info: In most jurisdictions, you only need to provide your full legal name and address if lawfully detained.\n3. Detention Check: Ask clearly: 'Am I free to leave?' If police say yes, walk away calmly. If no, you are detained."
+  },
+  {
+    "id": "legal_2",
+    "category": "LEGAL",
+    "title": "Phone & Digital Device Seizure Rights",
+    "summary": "Police cannot force you to unlock your phone without a valid judicial warrant in most legal frameworks.",
+    "content": "1. Passcode vs Biometrics: Biometric unlock (Fingerprint/FaceID) can sometimes be compelled by court order; strong numeric passcodes offer higher legal protection.\n2. Consent: Explicitly state: 'I do not consent to a search of my phone or device.'\n3. Recording Police: You have the right to film police officers in public spaces as long as you do not physically obstruct their operations."
+  },
+  {
+    "id": "legal_3",
+    "category": "LEGAL",
+    "title": "Right to Legal Counsel & Medical Aid",
+    "summary": "Immediate actions upon arrest or custody.",
+    "content": "1. Legal Call: You have the right to make a phone call to a legal counsel or designated emergency contact.\n2. Medical Care: If injured during arrest or custody, request medical assistance immediately. Officers have a legal duty of care."
+  }
+]

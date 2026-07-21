@@ -1,0 +1,23 @@
+[
+  {
+    "id": "med_1",
+    "category": "FIRST_AID",
+    "title": "Tear Gas & CS Gas Decontamination",
+    "summary": "Immediate steps for chemical irritant exposure.",
+    "content": "1. Do NOT rub your eyes or face — this embeds chemical crystals deeper into skin and eyes.\n2. Flush Eyes: Flush eyes outwards with large amounts of clean saline solution or cold water for 10–15 minutes.\n3. Air Flow: Move immediately to fresh high ground facing the wind.\n4. Skin Decon: Wash exposed skin with cold water and mild liquid soap. Hot water opens skin pores and worsens burning."
+  },
+  {
+    "id": "med_2",
+    "category": "FIRST_AID",
+    "title": "Pepper Spray (OC Spray) Relief",
+    "summary": "Oil-based pepper spray treatment instructions.",
+    "content": "1. Remove Contact Lenses immediately with clean hands and discard them.\n2. Flush continuously with sterile water or cold saline.\n3. Do not apply oil, butter, or petroleum jelly — oils trap OC pepper resins against the skin."
+  },
+  {
+    "id": "med_3",
+    "category": "FIRST_AID",
+    "title": "Crush Injury & Crowd Compression Response",
+    "summary": "Managing crowd pressure and compression asphyxia.",
+    "content": "1. Stance: Keep feet wide apart like a boxer, knees slightly bent, and hold hands up near your chest like a shield to preserve chest expansion space.\n2. If Fallen: Roll into a ball, cover your head with arms, and turn onto your side to protect internal organs."
+  }
+]

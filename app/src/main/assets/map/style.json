@@ -1,0 +1,50 @@
+{
+  "version": 8,
+  "name": "Kriptic Delhi NCR Dark Offline",
+  "center": [77.2090, 28.6139],
+  "zoom": 13,
+  "sources": {
+    "openmaptiles": {
+      "type": "vector",
+      "url": "mbtiles:///map/delhi_ncr.mbtiles"
+    }
+  },
+  "layers": [
+    {
+      "id": "background",
+      "type": "background",
+      "paint": {
+        "background-color": "#121212"
+      }
+    },
+    {
+      "id": "water",
+      "type": "fill",
+      "source": "openmaptiles",
+      "source-layer": "water",
+      "paint": {
+        "fill-color": "#1B2A4A"
+      }
+    },
+    {
+      "id": "roads",
+      "type": "line",
+      "source": "openmaptiles",
+      "source-layer": "transportation",
+      "paint": {
+        "line-color": "#313136",
+        "line-width": 2
+      }
+    },
+    {
+      "id": "buildings",
+      "type": "fill",
+      "source": "openmaptiles",
+      "source-layer": "building",
+      "paint": {
+        "fill-color": "#1B1B1E",
+        "fill-outline-color": "#242428"
+      }
+    }
+  ]
+}
