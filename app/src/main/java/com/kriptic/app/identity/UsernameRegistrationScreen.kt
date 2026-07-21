@@ -34,7 +34,7 @@ fun UsernameRegistrationScreen(
             Text(
                 text = "Welcome to Kriptic",
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Semibold,
+                fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onBackground
             )
 

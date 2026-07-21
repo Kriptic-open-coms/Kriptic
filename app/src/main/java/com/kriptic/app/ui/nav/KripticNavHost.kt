@@ -56,7 +56,7 @@ fun KripticNavHost(identity: Identity) {
                         label = {
                             Text(
                                 screen.label,
-                                fontWeight = if (selected) FontWeight.Semibold else FontWeight.Normal
+                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
                             )
                         },
                         selected = selected,
