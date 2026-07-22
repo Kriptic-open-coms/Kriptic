@@ -1,6 +1,7 @@
 # Kriptic
 
 [![Figma](https://img.shields.io/badge/Figma-F24E1E?style=for-the-badge&logo=figma&logoColor=white)](https://www.figma.com/design/MPjVu6LxPHDoTdPA6ERpBg/Untitled?node-id=0-1&t=wTowm68vFYEQdYcB-1)
+[![Discord](https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/CXybPutgp)
 
 **A phone-only, off-grid safety toolkit for people at protests when cellular and internet infrastructure is deliberately shut down.**
 
