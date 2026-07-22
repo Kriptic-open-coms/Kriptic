@@ -1,9 +1,11 @@
 name: PR Quality Check
 
 on:
+  push:
+    branches: [ master, dev ]
   pull_request:
     branches: [ master, dev ]
-
+  workflow_dispatch:
 jobs:
   validate-code:
     runs-on: ubuntu-latest
