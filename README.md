@@ -1,5 +1,8 @@
 # Kriptic
 
+[![Figma](https://img.shields.io/badge/Figma-Design-F24E1E?logo=figma&logoColor=white)](https://www.figma.com/design/MPjVu6LxPHDoTdPA6ERpBg/Kriptic-app-design?node-id=0-1&t=Fgit2fH6xkGWEiX3-1)
+[![Discord](https://img.shields.io/badge/Discord-Join_Community-5865F2?logo=discord&logoColor=white)](https://discord.gg/CXybPutgp)
+
 **A phone-only, off-grid communication toolkit for when cellular networks and internet access aren't available — whether from a natural disaster, remote terrain, infrastructure failure, or a deliberate shutdown.**
 
 No internet. No cell service. No external hardware. Just the phones already in people's pockets, talking to each other directly.
