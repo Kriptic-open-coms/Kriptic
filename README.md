@@ -1,6 +1,6 @@
 # Kriptic
 
-[![Figma](https://shields.io)](https://www.figma.com/design/MPjVu6LxPHDoTdPA6ERpBg/Untitled?node-id=0-1&t=wTowm68vFYEQdYcB-1)
+[![Figma](https://img.shields.io/badge/Figma-F24E1E?style=for-the-badge&logo=figma&logoColor=white)](https://www.figma.com/design/MPjVu6LxPHDoTdPA6ERpBg/Untitled?node-id=0-1&t=wTowm68vFYEQdYcB-1)
 
 **A phone-only, off-grid safety toolkit for people at protests when cellular and internet infrastructure is deliberately shut down.**
 
@@ -23,12 +23,6 @@ When authorities shut down mobile networks and internet access during protests, 
 | **Silent SOS** | A fast, low-friction trigger that broadcasts your location and status to nearby peers and asks for help — no need to fully unlock or navigate the app. |
 | **Panic Wipe** | Instantly destroys local data. No confirmation dialog — the trigger *is* the confirmation. |
 | **Knowledge Base** | A searchable, offline first-aid and know-your-rights reference for protest contexts (tear gas exposure, wound care, arrest/detention rights, etc.), organized by the same channel-style categories as the rest of the app. |
-
-## What Kriptic is not
-
-- Not a chat app that "also works offline sometimes" — offline-first is the whole architecture, not a fallback mode.
-- Not dependent on any server we control. If our backend disappears, the app still works, because there is no backend in the critical path.
-- Not carrying an on-device LLM in v1. The Knowledge tab ships as static, indexed, offline content in v1; an on-device LLM interface is an explicit v2 candidate — see `docs/03_SCOPE.md`.
 
 ## Read next
 
