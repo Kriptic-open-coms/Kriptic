@@ -10,6 +10,16 @@ import androidx.compose.ui.text.font.FontFamily
  * Do not hardcode colors or fonts anywhere else in the codebase — always
  * reference these tokens (directly, or via Color.kt / Type.kt which derive
  * from them) so the app stays reskinnable from one file.
+ *
+ * FONT NOTE: real Inter .ttf files are NOT bundled in this build (couldn't
+ * be fetched in the environment this scaffold was generated in — Google
+ * Fonts isn't reachable from there). AppFontFamily falls back to the
+ * platform default sans-serif so the project still compiles. To get the
+ * real Inter look: download the four weights from
+ * https://fonts.google.com/specimen/Inter, drop them into
+ * app/src/main/res/font/ as inter_regular.ttf / inter_medium.ttf /
+ * inter_semibold.ttf, then swap the line below for:
+ *   FontFamily(Font(R.font.inter_regular, FontWeight.Normal), ...)
  */
 object DesignTokens {
 
@@ -30,18 +40,11 @@ object DesignTokens {
     val SemanticWarning = Color(0xFFF5A623)   // police lines, barricades
     val SemanticDanger = Color(0xFFE5484D)    // active danger / SOS escalation only
     val SemanticSafe = Color(0xFF3DAA6B)      // safe zones, legal aid, medical
+    val SemanticGather = Color(0xFF6B7A99)    // gather points — neutral gray-blue
 
     // ------------------------------------------------------------------
-    // FONT — the single typeface used across the app.
-    // Default: Inter. To change, drop new .ttf files into res/font/ and
-    // update the FontFamily below — nothing else needs to change.
-    //
-    // NOTE: To use Inter, download the .ttf files from
-    // https://fonts.google.com/specimen/Inter and place in res/font/ as:
-    //   inter_regular.ttf, inter_medium.ttf, inter_semibold.ttf
-    // Then uncomment the FontFamily below and remove this line.
-    // For now, uses the system default font (Roboto on most Androids).
-
+    // FONT — the single typeface used across the app. See note above.
+    // ------------------------------------------------------------------
     val AppFontFamily = FontFamily.Default
 
     // ------------------------------------------------------------------

@@ -31,3 +31,4 @@ val AccentPressed = DesignTokens.AccentColorPressed
 val Warning = DesignTokens.SemanticWarning
 val Danger = DesignTokens.SemanticDanger
 val Safe = DesignTokens.SemanticSafe
+val Gather = DesignTokens.SemanticGather

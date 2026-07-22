@@ -1,0 +1,13 @@
+{
+  "_readme": "Each entry is one searchable first-aid procedure relevant to protest contexts. Content here needs review by someone with real medical/first-aid credentials before it ships — see CONTRIBUTING.md.",
+  "entries": [
+    {
+      "id": "example-entry-placeholder",
+      "title": "PLACEHOLDER — replace with a real, reviewed entry",
+      "category": "Danger-Alert",
+      "body": "This is a placeholder. Do not ship without a first-aid-qualified review. See CONTRIBUTING.md for the content review process.",
+      "source": "TODO: cite the medical guidance this is based on",
+      "last_reviewed": null
+    }
+  ]
+}

@@ -1,70 +1,163 @@
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    id("com.google.devtools.ksp")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.parcelize)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
 }
 
 android {
     namespace = "com.kriptic.app"
-    compileSdk = 34
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
         applicationId = "com.kriptic.app"
-        minSdk = 26
-        targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
-    }
+        minSdk = libs.versions.minSdk.get().toInt()
+        targetSdk = libs.versions.targetSdk.get().toInt()
+        versionCode = 36
+        versionName = "1.7.5"
 
-    buildTypes {
-        release {
-            isMinifyEnabled = true
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables {
+            useSupportLibrary = true
         }
     }
 
-    buildFeatures {
-        compose = true
+    dependenciesInfo {
+        // Disables dependency metadata when building APKs.
+        includeInApk = false
+        // Disables dependency metadata when building Android App Bundles.
+        includeInBundle = false
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.5"
+    buildTypes {
+        debug {
+            ndk {
+                // Include x86_64 for emulator support during development
+                abiFilters += listOf("arm64-v8a", "x86_64", "armeabi-v7a", "x86")
+            }
+        }
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
+
+    // APK splits for GitHub releases - creates arm64, x86_64, and universal APKs
+    // AAB for Play Store handles architecture distribution automatically
+    // Auto-detects: splits enabled for assemble tasks, disabled for bundle tasks
+    // Works in Android Studio GUI and CLI without needing extra properties
+    val enableSplits = gradle.startParameter.taskNames.any { taskName ->
+        taskName.contains("assemble", ignoreCase = true) &&
+        !taskName.contains("bundle", ignoreCase = true)
+    }
+
+    splits {
+        abi {
+            isEnable = enableSplits
+            reset()
+            include("arm64-v8a", "x86_64", "armeabi-v7a", "x86")
+            isUniversalApk = true  // For F-Droid and fallback
+        }
     }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-
     kotlinOptions {
         jvmTarget = "17"
     }
-
+    buildFeatures {
+        compose = true
+    }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    lint {
+        baseline = file("lint-baseline.xml")
+        abortOnError = false
+        checkReleaseBuilds = false
+    }
 }
 
 dependencies {
-    implementation(platform("androidx.compose:compose-bom:2024.09.00"))
-    implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
-    implementation("androidx.activity:activity-compose:1.8.2")
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-graphics")
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.compose.material:material-icons-extended")
-    implementation("androidx.navigation:navigation-compose:2.7.7")
+    // Core Android dependencies
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.appcompat)
+    
+    // Compose
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.bundles.compose)
+    
+    // Lifecycle
+    implementation(libs.bundles.lifecycle)
+    implementation(libs.androidx.lifecycle.process)
+    
+    // Navigation
+    implementation(libs.androidx.navigation.compose)
+    
+    // Permissions
+    implementation(libs.accompanist.permissions)
 
-    implementation("androidx.security:security-crypto:1.1.0-alpha06")
-    implementation("androidx.room:room-runtime:2.6.1")
-    implementation("androidx.room:room-ktx:2.6.1")
-    ksp("androidx.room:room-compiler:2.6.1")
-    implementation("net.zetetic:android-database-sqlcipher:4.5.4")
+    // QR
+    implementation(libs.zxing.core)
+    implementation(libs.mlkit.barcode.scanning)
 
-    implementation("org.maplibre.gl:android-sdk:11.5.1")
+    // CameraX
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.compose)
+    
+    // Cryptography
+    implementation(libs.bundles.cryptography)
+    
+    // JSON
+    implementation(libs.gson)
+    
+    // Coroutines
+    implementation(libs.kotlinx.coroutines.android)
+    
+    // Bluetooth
+    implementation(libs.nordic.ble)
+
+    // WebSocket
+    implementation(libs.okhttp)
+
+    // Arti (Tor in Rust) Android bridge - custom build from latest source
+    // Built with rustls, 16KB page size support, and onio//un service client
+    // Native libraries are in src/tor/jniLibs/ (extracted from arti-custom.aar)
+    // Only included in tor flavor to reduce APK size for standard builds
+    // Note: AAR is kept in libs/ for reference, but libraries loaded from jniLibs/
+
+    // Google Play Services Location
+    implementation(libs.gms.location)
+
+    // Security preferences
+    implementation(libs.androidx.security.crypto)
+    
+    // EXIF orientation handling for images
+    implementation("androidx.exifinterface:exifinterface:1.3.7")
+
+    // Kriptic: markers + knowledge base local storage
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+
+    // Kriptic: offline map — see map-data/README.md for the tile pipeline
+    // this needs before it can actually render anything.
+    implementation(libs.maplibre.android.sdk)
+    
+    // Testing
+    testImplementation(libs.bundles.testing)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.bundles.compose.testing)
+    debugImplementation(libs.androidx.compose.ui.tooling)
 }
