@@ -1,0 +1,13 @@
+{
+  "_readme": "Each entry is one searchable article. 'category' should match the app's channel-style tags (General / Priority / Danger-Alert / Information) where relevant. Content here needs review by someone with real legal background before it ships — see CONTRIBUTING.md. Every entry needs a real 'source' citation, not just prose.",
+  "entries": [
+    {
+      "id": "example-entry-placeholder",
+      "title": "PLACEHOLDER — replace with a real, reviewed entry",
+      "category": "Information",
+      "body": "This is a placeholder. Do not ship without a legal review. See CONTRIBUTING.md for the content review process.",
+      "source": "TODO: cite the specific law/right this is based on",
+      "last_reviewed": null
+    }
+  ]
+}

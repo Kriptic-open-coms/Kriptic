@@ -1,114 +1,105 @@
 package com.kriptic.app.identity
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.kriptic.app.ui.theme.Body
+import com.kriptic.app.ui.theme.Caption
 import com.kriptic.app.ui.theme.DesignTokens
+import com.kriptic.app.ui.theme.Title
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * First-launch screen: choose a username, once, forever (until reinstall
+ * or panic wipe). See docs/01_ARCHITECTURE.md §1 for why this is immutable.
+ *
+ * [existingPeerNicknames] should be whatever mesh peers are currently
+ * visible, if any are already in range during onboarding — used only for
+ * the local collision check described in KripticIdentityRepository.
+ */
 @Composable
 fun UsernameRegistrationScreen(
-    onIdentityCreated: (String) -> Unit
+    repository: KripticIdentityRepository,
+    existingPeerNicknames: List<String> = emptyList(),
+    onRegistered: (String) -> Unit,
 ) {
-    var username by remember { mutableStateOf(TextFieldValue("")) }
+    var input by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
-    var isLoading by remember { mutableStateOf(false) }
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = DesignTokens.Spacing.lg.dp)
+            .padding(top = DesignTokens.Spacing.xxl.dp),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 24.dp)
-                .statusBarsPadding(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = "Welcome to Kriptic",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
+        Text("Choose a username", style = Title)
+        Spacer(Modifier.height(DesignTokens.Spacing.sm.dp))
+        Text(
+            "This is permanent — it can't be changed later without reinstalling " +
+                "the app. There's no central account system, so this name is only " +
+                "guaranteed unique among the mesh peers you're currently in range " +
+                "of, not across every Kriptic user everywhere.",
+            style = Caption,
+        )
 
-            Spacer(modifier = Modifier.height(8.dp))
+        Spacer(Modifier.height(DesignTokens.Spacing.xl.dp))
 
-            Text(
-                text = "Choose a username. This cannot be changed later.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+        OutlinedTextField(
+            value = input,
+            onValueChange = {
+                input = it
+                error = null
+            },
+            singleLine = true,
+            label = { Text("Username", style = Body) },
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            shape = MaterialTheme.shapes.medium,
+            modifier = Modifier.fillMaxWidth(),
+            isError = error != null,
+        )
 
-            Spacer(modifier = Modifier.height(32.dp))
-
-            OutlinedTextField(
-                value = username,
-                onValueChange = {
-                    if (it.text.length <= 20 && it.text.all { c -> c.isLetterOrDigit() || c == '_' }) {
-                        username = it
-                        error = null
-                    }
-                },
-                label = { Text("Username") },
-                placeholder = { Text("3-20 characters, letters/numbers/underscore") },
-                singleLine = true,
-                isError = error != null,
-                supportingText = error?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "No phone number. No email. No account.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Button(
-                onClick = {
-                    val name = username.text.trim()
-                    if (name.length < 3) {
-                        error = "Username must be at least 3 characters"
-                        return@Button
-                    }
-                    isLoading = true
-                    onIdentityCreated(name)
-                },
-                enabled = !isLoading && username.text.trim().length >= 3,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = DesignTokens.AccentColor
-                )
-            ) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                } else {
-                    Text("Create Identity", fontWeight = FontWeight.Medium)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "Note: Username uniqueness is enforced only within your local mesh. Global uniqueness is not guaranteed.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+        error?.let {
+            Spacer(Modifier.height(DesignTokens.Spacing.xs.dp))
+            Text(it, style = Caption, color = MaterialTheme.colorScheme.error)
         }
+
+        Spacer(Modifier.height(DesignTokens.Spacing.lg.dp))
+
+        Button(
+            onClick = {
+                val trimmed = input.trim()
+                when {
+                    !repository.isValidUsername(trimmed) ->
+                        error = "3-20 characters, letters/numbers/underscore, must start with a letter."
+                    repository.isTakenByVisiblePeer(trimmed, existingPeerNicknames) ->
+                        error = "Someone nearby is already using that name."
+                    else -> {
+                        val ok = repository.setUsernameOnce(trimmed)
+                        if (ok) onRegistered(trimmed) else error = "Could not register — try again."
+                    }
+                }
+            },
+            shape = MaterialTheme.shapes.medium,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("Confirm")
+        }
+
+        Spacer(Modifier.weight(1f))
+
+        Text(
+            "Your identity is a locally generated keypair, not a phone number " +
+                "or account. Nothing here is sent anywhere unless you send a message.",
+            style = Caption,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = DesignTokens.Spacing.lg.dp),
+        )
     }
 }
