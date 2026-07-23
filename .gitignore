@@ -3,9 +3,9 @@
 build/
 app/build/
 
-# Android Studio
+# IDE
 .idea/
 *.iml
 
 # Local SDK
-local.properties
+local.propertiesexport/

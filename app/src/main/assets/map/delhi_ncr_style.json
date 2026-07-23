@@ -1,0 +1,47 @@
+{
+  "version": 8,
+  "name": "Kriptic sample/test style (NOT production map data)",
+  "sources": {
+    "kriptic-sample": {
+      "type": "vector",
+      "tiles": ["http://127.0.0.1:8017/{z}/{x}/{y}.pbf"],
+      "minzoom": 6,
+      "maxzoom": 12
+    }
+  },
+  "sprite": "",
+  "glyphs": "",
+  "layers": [
+    {
+      "id": "background",
+      "type": "background",
+      "paint": { "background-color": "#1B1B1E" }
+    },
+    {
+      "id": "sample-boundary-fill",
+      "type": "fill",
+      "source": "kriptic-sample",
+      "source-layer": "sample_boundary",
+      "paint": { "fill-color": "#3D63D9", "fill-opacity": 0.08 }
+    },
+    {
+      "id": "sample-boundary-line",
+      "type": "line",
+      "source": "kriptic-sample",
+      "source-layer": "sample_boundary",
+      "paint": { "line-color": "#4F7CFF", "line-width": 1.5 }
+    },
+    {
+      "id": "sample-landmarks",
+      "type": "circle",
+      "source": "kriptic-sample",
+      "source-layer": "sample_landmarks",
+      "paint": {
+        "circle-radius": 5,
+        "circle-color": "#A0A0A6",
+        "circle-stroke-width": 1,
+        "circle-stroke-color": "#F2F2F2"
+      }
+    }
+  ]
+}

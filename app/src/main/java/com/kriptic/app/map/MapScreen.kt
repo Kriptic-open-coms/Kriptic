@@ -25,15 +25,14 @@ import org.maplibre.android.maps.Style
  * marker-type legend/filter, floating "Drop a pin" action, and a
  * bottom-sheet pin-type + description flow on tap.
  *
- * MAP DATA NOTE: this screen points at
- * `asset://map/delhi_ncr_style.json`, which is expected to reference a
- * bundled `delhi_ncr.pmtiles` file (see map-data/ at the repo root for the
- * build pipeline). That tile file is NOT included in this scaffold — it
- * has to be built from a real OpenStreetMap Delhi NCR extract on a machine
- * that can reach Geofabrik/planetiler, which wasn't reachable from the
- * environment this code was written in. Until that file exists at
- * app/src/main/assets/map/, MapLibre will fail to load the style and this
- * screen falls back to a plain surface so the app doesn't crash.
+ * MAP DATA: picks a real basemap when the device has connectivity —
+ * OpenFreeMap's free public vector-tile service (real global OSM data,
+ * so real Delhi NCR streets/places, not a placeholder) — and falls back
+ * to the bundled offline bridge only when there's no connection. See
+ * map/MapStyleProvider.kt for why, and map-data/README.md for the state
+ * of the offline-only path specifically (still synthetic test data —
+ * OpenFreeMap needs connectivity, so it doesn't help with the true
+ * zero-connectivity protest case that path exists for).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,28 +44,60 @@ fun MapScreen(
     var selectedType by remember { mutableStateOf<MarkerType?>(null) }
     var description by remember { mutableStateOf("") }
     var mapLoadFailed by remember { mutableStateOf(false) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val usingOnlineBasemap = remember { MapStyleProvider.isOnline(context) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         if (!mapLoadFailed) {
             AndroidView(
                 modifier = Modifier.fillMaxSize(),
-                factory = { context ->
-                    MapView(context).apply {
-                        onCreate(null)
-                        getMapAsync { map ->
-                            try {
-                                map.setStyle(Style.Builder().fromUri("asset://map/delhi_ncr_style.json")) { style ->
-                                    MarkerLayerRenderer.render(style, markers)
-                                    map.addOnMapClickListener { point ->
-                                        pendingPin = point.latitude to point.longitude
-                                        true
+                factory = { ctx ->
+                    val mapView = MapView(ctx)
+                    try {
+                        PmtilesLocalTileServer.start(ctx)
+                    } catch (e: Exception) {
+                        android.util.Log.e("MapScreen", "PmtilesLocalTileServer failed to start", e)
+                        // Non-fatal: fall through and force the offline style, which
+                        // will just render an empty basemap rather than crash if the
+                        // local server truly isn't up.
+                    }
+                    val styleUri = if (usingOnlineBasemap) MapStyleProvider.ONLINE_STYLE_URL else MapStyleProvider.OFFLINE_STYLE_URI
+                    try {
+                        mapView.apply {
+                            onCreate(null)
+                            getMapAsync { map ->
+                                try {
+                                    // Delhi NCR centroid — see map-data/README.md for the bbox this matches.
+                                    map.cameraPosition = org.maplibre.android.camera.CameraPosition.Builder()
+                                        .target(org.maplibre.android.geometry.LatLng(28.6139, 77.2090))
+                                        .zoom(10.0)
+                                        .build()
+                                    map.setStyle(Style.Builder().fromUri(styleUri)) { style ->
+                                        try {
+                                            MarkerLayerRenderer.render(style, markers)
+                                        } catch (e: Exception) {
+                                            android.util.Log.e("MapScreen", "MarkerLayerRenderer.render failed", e)
+                                        }
+                                        map.addOnMapClickListener { point ->
+                                            try {
+                                                pendingPin = point.latitude to point.longitude
+                                            } catch (e: Exception) {
+                                                android.util.Log.e("MapScreen", "onMapClick handling failed", e)
+                                            }
+                                            true
+                                        }
                                     }
+                                } catch (e: Exception) {
+                                    android.util.Log.e("MapScreen", "Map style/camera setup failed", e)
+                                    mapLoadFailed = true
                                 }
-                            } catch (e: Exception) {
-                                mapLoadFailed = true
                             }
                         }
+                    } catch (e: Exception) {
+                        android.util.Log.e("MapScreen", "MapView setup failed", e)
+                        mapLoadFailed = true
                     }
+                    mapView
                 },
                 update = { mapView ->
                     mapView.getMapAsync { map ->
@@ -74,6 +105,21 @@ fun MapScreen(
                     }
                 },
             )
+
+            if (!usingOnlineBasemap) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(DesignTokens.Spacing.md.dp)
+                        .background(
+                            MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+                            MaterialTheme.shapes.small,
+                        )
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                ) {
+                    Text("Offline sample data — not real map coverage", style = Caption)
+                }
+            }
         } else {
             Box(
                 modifier = Modifier
@@ -82,7 +128,8 @@ fun MapScreen(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    "Offline map tiles not bundled in this build yet.\nSee map-data/README.md.",
+                    "Map failed to load. Check Logcat for \"PmtilesLocalTileServer\" —\n" +
+                            "see map/MapScreen.kt and map-data/README.md.",
                     style = Body,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 )

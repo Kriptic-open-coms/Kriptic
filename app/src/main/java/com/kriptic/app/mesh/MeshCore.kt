@@ -414,13 +414,24 @@ class MeshCore(
     fun sendMessage(content: String, mentions: List<String> = emptyList(), channel: String? = null) {
         if (content.isEmpty()) return
         scope.launch {
+            val bitchatMsg = com.kriptic.app.model.BitchatMessage(
+                sender = peerManager.getPeerNickname(myPeerID) ?: myPeerID,
+                content = content,
+                timestamp = java.util.Date(),
+                isRelay = false,
+                senderPeerID = myPeerID,
+                mentions = if (mentions.isNotEmpty()) mentions else null,
+                channel = channel
+            )
+            val payloadBytes = bitchatMsg.toBinaryPayload() ?: content.toByteArray(Charsets.UTF_8)
+
             val packet = BitchatPacket(
                 version = 1u,
                 type = MessageType.MESSAGE.value,
                 senderID = MeshPacketUtils.hexStringToByteArray(myPeerID),
                 recipientID = SpecialRecipients.BROADCAST,
                 timestamp = System.currentTimeMillis().toULong(),
-                payload = content.toByteArray(Charsets.UTF_8),
+                payload = payloadBytes,
                 signature = null,
                 ttl = maxTtl
             )
