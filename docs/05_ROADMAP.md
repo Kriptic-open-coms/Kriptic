@@ -10,7 +10,7 @@ Goal: the six-point "done" checklist in `docs/00_BRIEF.md` passes on real hardwa
 - [ ] Security review of inherited mesh/crypto code before any real-world reliance
 - [ ] Username + keypair onboarding flow
 - [ ] Kriptic channel set wired into the inherited mesh/messaging UI
-- [ ] Offline Delhi NCR map pipeline (`map-data/`) producing a landmark/shop-name-rich PMTiles bundle
+- [x] Offline Delhi NCR map pipeline (`map-data/`) producing a landmark/shop-name-rich PMTiles bundle
 - [ ] Marker system: typed pins, mesh broadcast, expiry, aggregation
 - [ ] Silent SOS trigger
 - [ ] Panic wipe extended from bitchat's existing gesture

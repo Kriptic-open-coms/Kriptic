@@ -1,26 +1,53 @@
 # map-data
 
-Build pipeline that produces `app/src/main/assets/map/delhi_ncr.pmtiles`, the offline vector tile bundle shipped inside the APK.
+Build pipeline that produces `delhi_ncr.pmtiles`, the offline vector tile bundle shipped inside the APK at `app/src/main/assets/map/`.
 
-This directory does not ship inside the app itself — it's the tooling that produces the file that does.
+This directory is tooling + provenance — the APK consumes the copied `.pmtiles` under `app/`, not these scripts at runtime.
 
-## Pipeline (planned)
+## Decision
 
-1. Pull an OpenStreetMap extract covering Delhi NCR (source URL and extract date recorded in `sources.md` for reproducibility — OSM extracts go stale, so we need to know exactly which snapshot is in the app at any time).
-2. Run `planetiler` (or `tilemaker`, TBD — see open question below) to build a PMTiles bundle, including landmark, POI, and shop-name layers, not just the road network.
-3. Verify the output renders correctly in MapLibre before committing.
-4. Commit the resulting `.pmtiles` file via **Git LFS** (it's a binary blob, don't commit it directly to Git history) and copy/symlink it into `app/src/main/assets/map/`.
+- **Builder:** Planetiler (OpenMapTiles profile), not Tilemaker — Tilemaker’s Delhi bake-off lacked usable shop/place labels; Planetiler showed streets + shop labels.
+- **Geography:** city/metro extracts (BBBike NewDelhi for v1), not all-India. More cities can be added later as optional in-app downloads when online.
+- **Layers:** pruned to what the Maps tab needs — see `scripts/build_tiles.sh` (`ONLY_LAYERS`).
+- Recorded in `docs/adr/0006-planetiler-offline-tiles.md`.
 
-## Open question: planetiler vs. tilemaker
 
-Both are viable OSM-to-vector-tiles tools. Whoever picks this up should do a quick bake-off on the actual Delhi NCR extract size/render quality/build time before committing, and record the decision as an ADR in `docs/adr/`.
 
-## `sources.md`
+## Pipeline
 
-Track exactly which OSM extract (source, date, URL/checksum) produced the currently-committed tile bundle, so we can reproduce or update it later without guessing.
+1. Download a Delhi OSM **PBF** extract (BBBike NewDelhi) into `input/NewDelhi.osm.pbf` — URL/checksum in `sources.md`.
+2. Run `./scripts/build_tiles.sh` (Docker + Planetiler). First run caches helper data under `planetiler-sources/`.
+3. Spot-check `out/delhi_ncr.pmtiles` on [https://pmtiles.io/](https://pmtiles.io/) (streets + shop names).
+4. Script copies the file to `app/src/main/assets/map/delhi_ncr.pmtiles` (Git LFS — see repo `.gitattributes`).
+5. Update the row in `sources.md` when you rebuild.
+
+
 
 ## Regenerating the bundle
 
 ```bash
-./scripts/build_tiles.sh   # placeholder — fill in once the pipeline is implemented
+cd map-data
+# place/refresh input/NewDelhi.osm.pbf first
+./scripts/build_tiles.sh
 ```
+
+Optional:
+
+```bash
+JAVA_XMX=2g SKIP_COPY_TO_APP=1 ./scripts/build_tiles.sh
+```
+
+
+
+## Layout
+
+```text
+map-data/
+  input/                 # *.osm.pbf extracts (not required in git if re-downloadable)
+  out/                   # built *.pmtiles
+  planetiler-sources/    # Planetiler helper downloads (cached, gitignored)
+  logs/
+  scripts/build_tiles.sh
+  sources.md
+```
+
