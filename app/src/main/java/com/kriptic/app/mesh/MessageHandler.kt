@@ -18,21 +18,21 @@ import kotlin.random.Random
  * Extracted from BluetoothMeshService for better separation of concerns
  */
 class MessageHandler(private val myPeerID: String, private val appContext: android.content.Context) {
-    
+
     companion object {
         private const val TAG = "MessageHandler"
         private const val ANNOUNCE_CLOCK_SKEW_TOLERANCE_MS = 10 * 60 * 1000L
     }
-    
+
     // Delegate for callbacks
     var delegate: MessageHandlerDelegate? = null
-    
+
     // Reference to PacketProcessor for recursive packet handling
     var packetProcessor: PacketProcessor? = null
-    
+
     // Coroutines
     private val handlerScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    
+
     /**
      * Handle Noise encrypted transport message - SIMPLIFIED iOS-compatible version
      * Uses NoisePayloadType system exactly like iOS SimplifiedBluetoothService
@@ -40,19 +40,19 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
     suspend fun handleNoiseEncrypted(routed: RoutedPacket) {
         val packet = routed.packet
         val peerID = routed.peerID ?: "unknown"
-        
+
         Log.d(TAG, "Processing Noise encrypted message from $peerID (${packet.payload.size} bytes)")
-        
+
         // Skip our own messages
         if (peerID == myPeerID) return
-        
+
         // Check if this message is for us
         val recipientID = packet.recipientID?.toHexString()
         if (recipientID != myPeerID) {
             Log.d(TAG, "🔐 Encrypted message not for me (for $recipientID, I am $myPeerID)")
             return
         }
-        
+
         try {
             // Decrypt the message using the Noise service
             val decryptedData = delegate?.decryptFromPeer(packet.payload, peerID)
@@ -60,21 +60,21 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
                 Log.w(TAG, "Failed to decrypt Noise message from $peerID - may need handshake")
                 return
             }
-            
+
             if (decryptedData.isEmpty()) {
                 Log.w(TAG, "Decrypted data is empty from $peerID")
                 return
             }
-            
+
             // NEW: Use NoisePayload system exactly like iOS
             val noisePayload = com.kriptic.app.model.NoisePayload.decode(decryptedData)
             if (noisePayload == null) {
                 Log.w(TAG, "Failed to parse NoisePayload from $peerID")
                 return
             }
-            
+
             Log.d(TAG, "🔓 Decrypted NoisePayload type ${noisePayload.type} from $peerID")
-            
+
             when (noisePayload.type) {
                 com.kriptic.app.model.NoisePayloadType.PRIVATE_MESSAGE -> {
                     // Decode TLV private message exactly like iOS
@@ -90,7 +90,7 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
                             sendDeliveryAck(privateMessage.messageID, peerID)
                             return
                         }
-                        
+
                         // Create BitchatMessage - preserve source packet timestamp
                         val message = BitchatMessage(
                             id = privateMessage.messageID,
@@ -104,15 +104,15 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
                             senderPeerID = peerID,
                             mentions = null // TODO: Parse mentions if needed
                         )
-                        
+
                         // Notify delegate
                         delegate?.onMessageReceived(message)
-                        
+
                         // Send delivery ACK exactly like iOS
                         sendDeliveryAck(privateMessage.messageID, peerID)
                     }
                 }
-                
+
                 com.kriptic.app.model.NoisePayloadType.FILE_TRANSFER -> {
                     // Handle encrypted file transfer; generate unique message ID
                     val file = com.kriptic.app.model.BitchatFilePacket.decode(noisePayload.data)
@@ -141,21 +141,21 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
                         Log.w(TAG, "⚠️ Failed to decode encrypted file transfer from $peerID")
                     }
                 }
-                
+
                 com.kriptic.app.model.NoisePayloadType.DELIVERED -> {
                     // Handle delivery ACK exactly like iOS
                     val messageID = String(noisePayload.data, Charsets.UTF_8)
                     Log.d(TAG, "📬 Delivery ACK received from $peerID for message $messageID")
-                    
+
                     // Simplified: Call delegate with messageID and peerID directly
                     delegate?.onDeliveryAckReceived(messageID, peerID)
                 }
-                
+
                 com.kriptic.app.model.NoisePayloadType.READ_RECEIPT -> {
                     // Handle read receipt exactly like iOS
                     val messageID = String(noisePayload.data, Charsets.UTF_8)
                     Log.d(TAG, "👁️ Read receipt received from $peerID for message $messageID")
-                    
+
                     // Simplified: Call delegate with messageID and peerID directly
                     delegate?.onReadReceiptReceived(messageID, peerID)
                 }
@@ -168,12 +168,12 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
                     delegate?.onVerifyResponseReceived(peerID, noisePayload.data, packet.timestamp.toLong())
                 }
             }
-            
+
         } catch (e: Exception) {
             Log.e(TAG, "Error processing Noise encrypted message from $peerID: ${e.message}")
         }
     }
-    
+
     /**
      * Send delivery ACK for a received private message - exactly like iOS
      */
@@ -184,34 +184,34 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
                 type = com.kriptic.app.model.NoisePayloadType.DELIVERED,
                 data = messageID.toByteArray(Charsets.UTF_8)
             )
-            
+
             // Encrypt the payload
             val encryptedPayload = delegate?.encryptForPeer(ackPayload.encode(), senderPeerID)
             if (encryptedPayload == null) {
                 Log.w(TAG, "Failed to encrypt delivery ACK for $senderPeerID")
                 return
             }
-            
+
             // Create NOISE_ENCRYPTED packet exactly like iOS
-                val packet = BitchatPacket(
-                    version = 1u,
-                    type = MessageType.NOISE_ENCRYPTED.value,
-                    senderID = hexStringToByteArray(myPeerID),
-                    recipientID = hexStringToByteArray(senderPeerID),
-                    timestamp = System.currentTimeMillis().toULong(),
-                    payload = encryptedPayload,
-                    signature = null,
-                    ttl = com.kriptic.app.util.AppConstants.MESSAGE_TTL_HOPS // Same TTL as iOS messageTTL
-                )
-            
+            val packet = BitchatPacket(
+                version = 1u,
+                type = MessageType.NOISE_ENCRYPTED.value,
+                senderID = hexStringToByteArray(myPeerID),
+                recipientID = hexStringToByteArray(senderPeerID),
+                timestamp = System.currentTimeMillis().toULong(),
+                payload = encryptedPayload,
+                signature = null,
+                ttl = com.kriptic.app.util.AppConstants.MESSAGE_TTL_HOPS // Same TTL as iOS messageTTL
+            )
+
             delegate?.sendPacket(packet)
             Log.d(TAG, "📤 Sent delivery ACK to $senderPeerID for message $messageID")
-            
+
         } catch (e: Exception) {
             Log.e(TAG, "Failed to send delivery ACK to $senderPeerID: ${e.message}")
         }
     }
-    
+
     /**
      * Handle announce message with TLV decoding and signature verification - exactly like iOS
      */
@@ -231,14 +231,14 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
         } else if (clockSkewMs > com.kriptic.app.util.AppConstants.Mesh.STALE_PEER_TIMEOUT_MS) {
             Log.w(TAG, "Accepting ANNOUNCE from ${peerID.take(8)} within clock skew tolerance (${clockSkewMs}ms)")
         }
-        
+
         // Try to decode as iOS-compatible IdentityAnnouncement with TLV format
         val announcement = IdentityAnnouncement.decode(packet.payload)
         if (announcement == null) {
             Log.w(TAG, "Failed to decode announce from $peerID as iOS-compatible TLV format")
             return false
         }
-        
+
         // Verify packet signature using the announced signing public key
         var verified = false
         if (packet.signature != null) {
@@ -252,7 +252,7 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
         // Check for existing peer with different noise public key
         // If existing peer has a different noise public key, do not consider this verified
         val existingPeer = delegate?.getPeerInfo(peerID)
-        
+
         if (existingPeer != null && existingPeer.noisePublicKey != null && !existingPeer.noisePublicKey!!.contentEquals(announcement.noisePublicKey)) {
             Log.w(TAG, "⚠️ Announce key mismatch for ${peerID.take(8)}... — keeping unverified")
             verified = false
@@ -263,17 +263,17 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
             Log.w(TAG, "❌ Ignoring unverified announce from ${peerID.take(8)}...")
             return false
         }
-        
+
         // Successfully decoded TLV format exactly like iOS
         Log.d(TAG, "✅ Verified announce from $peerID: nickname=${announcement.nickname}, " +
                 "noisePublicKey=${announcement.noisePublicKey.joinToString("") { "%02x".format(it) }.take(16)}..., " +
                 "signingPublicKey=${announcement.signingPublicKey.joinToString("") { "%02x".format(it) }.take(16)}...")
-        
+
         // Extract nickname and public keys from TLV data
         val nickname = announcement.nickname
         val noisePublicKey = announcement.noisePublicKey
         val signingPublicKey = announcement.signingPublicKey
-        
+
         // Update peer info with verification status through new method
         val isFirstAnnounce = delegate?.updatePeerInfo(
             peerID = peerID,
@@ -290,7 +290,7 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
             publicKey = noisePublicKey,
             previousPeerID = null
         )
-        
+
         // Update mesh graph from gossip neighbors (only if TLV present)
         try {
             val neighborsOrNull = com.kriptic.app.services.meshgraph.GossipTLV.decodeNeighborsFromAnnouncementPayload(packet.payload)
@@ -301,7 +301,7 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
         Log.d(TAG, "✅ Processed verified TLV announce: stored identity for $peerID")
         return isFirstAnnounce
     }
-    
+
     /**
      * Handle Noise handshake - SIMPLIFIED iOS-compatible version
      * Single handshake type (0x10) with response determined by payload analysis
@@ -309,26 +309,26 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
     suspend fun handleNoiseHandshake(routed: RoutedPacket) {
         val packet = routed.packet
         val peerID = routed.peerID ?: "unknown"
-        
+
         Log.d(TAG, "Processing Noise handshake from $peerID (${packet.payload.size} bytes)")
-        
+
         // Skip our own handshake messages
         if (peerID == myPeerID) return
-        
+
         // Check if handshake is addressed to us
         val recipientID = packet.recipientID?.toHexString()
         if (recipientID != myPeerID) {
             Log.d(TAG, "Handshake not for me (for $recipientID, I am $myPeerID)")
             return
         }
-        
+
         try {
             // Process handshake message through delegate (simplified approach)
             val response = delegate?.processNoiseHandshakeMessage(packet.payload, peerID)
-            
+
             if (response != null) {
                 Log.d(TAG, "Generated handshake response for $peerID (${response.size} bytes)")
-                
+
                 // Send response using same packet type (simplified iOS approach)
                 val responsePacket = BitchatPacket(
                     version = 1u,
@@ -340,22 +340,22 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
                     signature = null,
                     ttl = com.kriptic.app.util.AppConstants.MESSAGE_TTL_HOPS // Same TTL as iOS
                 )
-                
+
                 delegate?.sendPacket(responsePacket)
                 Log.d(TAG, "📤 Sent handshake response to $peerID")
             }
-            
+
             // Check if session is now established
             val hasSession = delegate?.hasNoiseSession(peerID) ?: false
             if (hasSession) {
                 Log.d(TAG, "✅ Noise session established with $peerID")
             }
-            
+
         } catch (e: Exception) {
             Log.e(TAG, "Failed to process Noise handshake from $peerID: ${e.message}")
         }
     }
-    
+
     /**
      * Handle broadcast or private message
      */
@@ -368,9 +368,9 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
             Log.d(TAG, "Received message from $senderNickname")
             delegate?.updatePeerNickname(peerID, senderNickname)
         }
-        
+
         val recipientID = packet.recipientID?.takeIf { !it.contentEquals(delegate?.getBroadcastRecipient()) }
-        
+
         if (recipientID == null) {
             // BROADCAST MESSAGE
             handleBroadcastMessage(routed)
@@ -380,21 +380,22 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
         }
         // Message relay is now handled by centralized PacketRelayManager
     }
-    
+
     /**
      * Handle broadcast message with verification enforcement
      */
     private suspend fun handleBroadcastMessage(routed: RoutedPacket) {
         val packet = routed.packet
         val peerID = routed.peerID ?: "unknown"
-        
+
         // Enforce: only accept public messages from verified peers we know
         val peerInfo = delegate?.getPeerInfo(peerID)
         if (peerInfo == null || !peerInfo.isVerifiedNickname) {
+            android.util.Log.d("KripticDebug", "RECV DROPPED (unverified) peer=$peerID peerInfoNull=${peerInfo == null} verified=${peerInfo?.isVerifiedNickname}")
             Log.w(TAG, "🚫 Dropping public message from unverified or unknown peer ${peerID.take(8)}...")
             return
         }
-        
+
         try {
             // Try file packet first (voice, image, etc.) and log outcome for FILE_TRANSFER
             val isFileTransfer = com.kriptic.app.protocol.MessageType.fromValue(packet.type) == com.kriptic.app.protocol.MessageType.FILE_TRANSFER
@@ -420,19 +421,37 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
             }
 
             // Fallback: plain text
-            val message = BitchatMessage(
-                id = PacketIdUtil.computeIdHex(packet).uppercase(),
-                sender = delegate?.getPeerNickname(peerID) ?: "unknown",
-                content = String(packet.payload, Charsets.UTF_8),
-                senderPeerID = peerID,
-                timestamp = Date(packet.timestamp.toLong())
-            )
+            // FIX: try the structured decode first — this is the
+            // counterpart to the sendMessage() fix in
+            // BluetoothMeshService.kt. Without this, `channel` (and
+            // `mentions`) are always null on the receiving side even
+            // after the sender starts encoding them, since the old code
+            // here only ever read `packet.payload` as a raw UTF-8 string
+            // and never looked for the structured format at all.
+            val structuredMessage = com.kriptic.app.model.BitchatMessage.fromBinaryPayload(packet.payload)
+            val message = if (structuredMessage != null) {
+                structuredMessage.copy(
+                    id = PacketIdUtil.computeIdHex(packet).uppercase(),
+                    sender = delegate?.getPeerNickname(peerID) ?: structuredMessage.sender,
+                    senderPeerID = peerID,
+                    timestamp = Date(packet.timestamp.toLong()),
+                )
+            } else {
+                BitchatMessage(
+                    id = PacketIdUtil.computeIdHex(packet).uppercase(),
+                    sender = delegate?.getPeerNickname(peerID) ?: "unknown",
+                    content = String(packet.payload, Charsets.UTF_8),
+                    senderPeerID = peerID,
+                    timestamp = Date(packet.timestamp.toLong())
+                )
+            }
             delegate?.onMessageReceived(message)
+            android.util.Log.d("KripticDebug", "RECV DECODED channel=${message.channel} content='${message.content}' structuredDecodeOk=${structuredMessage != null} from=$peerID")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to process broadcast message: ${e.message}")
         }
     }
-    
+
     /**
      * Handle (decrypted) private message addressed to us
      */
@@ -483,8 +502,8 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
         }
     }
 
-    
-    
+
+
     /**
      * Handle leave message
      */
@@ -492,7 +511,7 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
         val packet = routed.packet
         val peerID = routed.peerID ?: "unknown"
         val content = String(packet.payload, Charsets.UTF_8)
-        
+
         if (content.startsWith("#")) {
             // Channel leave
             delegate?.onChannelLeave(content, peerID)
@@ -500,10 +519,10 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
             // Peer disconnect
             delegate?.removePeer(peerID)
         }
-        
+
         // Leave message relay is now handled by centralized PacketRelayManager
     }
-    
+
     /**
      * Get debug information
      */
@@ -514,7 +533,7 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
             appendLine("My Peer ID: $myPeerID")
         }
     }
-    
+
     /**
      * Convert hex string peer ID to binary data (8 bytes) - same as iOS implementation
      */
@@ -522,7 +541,7 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
         val result = ByteArray(8) { 0 } // Initialize with zeros, exactly 8 bytes
         var tempID = hexString
         var index = 0
-        
+
         while (tempID.length >= 2 && index < 8) {
             val hexByte = tempID.substring(0, 2)
             val byte = hexByte.toIntOrNull(16)?.toByte()
@@ -532,7 +551,7 @@ class MessageHandler(private val myPeerID: String, private val appContext: andro
             tempID = tempID.substring(2)
             index++
         }
-        
+
         return result
     }
 
@@ -605,25 +624,25 @@ interface MessageHandlerDelegate {
     fun getMyNickname(): String?
     fun getPeerInfo(peerID: String): PeerInfo?
     fun updatePeerInfo(peerID: String, nickname: String, noisePublicKey: ByteArray, signingPublicKey: ByteArray, isVerified: Boolean): Boolean
-    
+
     // Packet operations
     fun sendPacket(packet: BitchatPacket)
     fun relayPacket(routed: RoutedPacket)
     fun getBroadcastRecipient(): ByteArray
-    
+
     // Cryptographic operations
     fun verifySignature(packet: BitchatPacket, peerID: String): Boolean
     fun encryptForPeer(data: ByteArray, recipientPeerID: String): ByteArray?
     fun decryptFromPeer(encryptedData: ByteArray, senderPeerID: String): ByteArray?
     fun verifyEd25519Signature(signature: ByteArray, data: ByteArray, publicKey: ByteArray): Boolean
-    
+
     // Noise protocol operations
     fun hasNoiseSession(peerID: String): Boolean
     fun initiateNoiseHandshake(peerID: String)
     fun processNoiseHandshakeMessage(payload: ByteArray, peerID: String): ByteArray?
     fun updatePeerIDBinding(newPeerID: String, nickname: String,
-                           publicKey: ByteArray, previousPeerID: String?)
-    
+                            publicKey: ByteArray, previousPeerID: String?)
+
     // Message operations
     fun decryptChannelMessage(encryptedContent: ByteArray, channel: String): String?
 

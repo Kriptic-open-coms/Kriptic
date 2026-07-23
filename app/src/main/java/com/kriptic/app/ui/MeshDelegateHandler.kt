@@ -40,14 +40,14 @@ class MeshDelegateHandler(
                 return@launch // Duplicate message, ignore
             }
             messageManager.markMessageProcessed(messageKey)
-            
+
             // Check if sender is blocked
             message.senderPeerID?.let { senderPeerID ->
                 if (privateChatManager.isPeerBlocked(senderPeerID)) {
                     return@launch
                 }
             }
-            
+
             // Trigger haptic feedback
             onHapticFeedback()
 
@@ -59,7 +59,7 @@ class MeshDelegateHandler(
                 message.senderPeerID?.let { senderPeerID ->
                     sendReadReceiptIfFocused(message)
                 }
-                
+
                 // Show notification with enhanced information - now includes senderPeerID 
                 message.senderPeerID?.let { senderPeerID ->
                     // Use nickname if available, fall back to sender or senderPeerID
@@ -73,6 +73,7 @@ class MeshDelegateHandler(
                 }
             } else if (message.channel != null) {
                 // Channel message: AppStateStore is the source of truth for list; only manage unread
+                android.util.Log.d("KripticDebug", "ROUTING channel=${message.channel} joinedChannels=${state.getJoinedChannelsValue()} isJoined=${state.getJoinedChannelsValue().contains(message.channel)}")
                 if (state.getJoinedChannelsValue().contains(message.channel)) {
                     val channel = message.channel
                     val viewingClassic = state.getCurrentChannelValue() == channel
@@ -94,14 +95,14 @@ class MeshDelegateHandler(
                 // Still run mention detection/notifications
                 checkAndTriggerMeshMentionNotification(message)
             }
-            
+
             // Periodic cleanup
             if (messageManager.isMessageProcessed("cleanup_check_${System.currentTimeMillis()/30000}")) {
                 messageManager.cleanupDeduplicationCaches()
             }
         }
     }
-    
+
     override fun didUpdatePeerList(peers: List<String>) {
         coroutineScope.launch {
             processPeerUpdate(peers.distinct())
@@ -112,7 +113,7 @@ class MeshDelegateHandler(
         state.setConnectedPeers(mergedPeers)
         state.setIsConnected(mergedPeers.isNotEmpty())
         notificationManager.showActiveUserNotification(mergedPeers)
-        
+
         // Flush router outbox for any peers that just connected (and their noiseHex aliases)
         runCatching { com.kriptic.app.services.MessageRouter.tryGetInstance()?.onPeersUpdated(mergedPeers) }
 
@@ -217,13 +218,13 @@ class MeshDelegateHandler(
             channelManager.removeChannelMember(channel, fromPeer)
         }
     }
-    
+
     override fun didReceiveDeliveryAck(messageID: String, recipientPeerID: String) {
         coroutineScope.launch {
             messageManager.updateMessageDeliveryStatus(messageID, DeliveryStatus.Delivered(recipientPeerID, Date()))
         }
     }
-    
+
     override fun didReceiveReadReceipt(messageID: String, recipientPeerID: String) {
         coroutineScope.launch {
             messageManager.updateMessageDeliveryStatus(messageID, DeliveryStatus.Read(recipientPeerID, Date()))
@@ -237,17 +238,17 @@ class MeshDelegateHandler(
     override fun didReceiveVerifyResponse(peerID: String, payload: ByteArray, timestampMs: Long) {
         // Handled by ChatViewModel for verification flow
     }
-    
+
     override fun decryptChannelMessage(encryptedContent: ByteArray, channel: String): String? {
         return channelManager.decryptChannelMessage(encryptedContent, channel)
     }
-    
+
     override fun getNickname(): String? = state.getNicknameValue()
-    
+
     override fun isFavorite(peerID: String): Boolean {
         return privateChatManager.isFavorite(peerID)
     }
-    
+
     /**
      * Check for mentions in mesh messages and trigger notifications
      */
@@ -299,40 +300,40 @@ class MeshDelegateHandler(
         // Get notification manager's focus state (mirror the notification logic)
         val isAppInBackground = notificationManager.getAppBackgroundState()
         val currentPrivateChatPeer = notificationManager.getCurrentPrivateChatPeer()
-        
+
         // Send read receipt if user is currently focused on this specific chat
         val senderPeerID = message.senderPeerID
         val shouldSendReadReceipt = !isAppInBackground && senderPeerID != null && currentPrivateChatPeer == senderPeerID
-        
-            if (shouldSendReadReceipt) {
-                android.util.Log.d("MeshDelegateHandler", "Sending reactive read receipt for focused chat with $senderPeerID (message=${message.id})")
-                val nickname = state.getNicknameValue() ?: "unknown"
-                val mesh = getMeshService()
-                val sent = try {
-                    val hasMesh = mesh.getPeerInfo(senderPeerID!!)?.isConnected == true && mesh.hasEstablishedSession(senderPeerID)
-                    if (hasMesh) {
-                        mesh.sendReadReceipt(message.id, senderPeerID, nickname)
-                        true
-                    } else {
-                        false
-                    }
-                } catch (_: Exception) {
+
+        if (shouldSendReadReceipt) {
+            android.util.Log.d("MeshDelegateHandler", "Sending reactive read receipt for focused chat with $senderPeerID (message=${message.id})")
+            val nickname = state.getNicknameValue() ?: "unknown"
+            val mesh = getMeshService()
+            val sent = try {
+                val hasMesh = mesh.getPeerInfo(senderPeerID!!)?.isConnected == true && mesh.hasEstablishedSession(senderPeerID)
+                if (hasMesh) {
+                    mesh.sendReadReceipt(message.id, senderPeerID, nickname)
+                    true
+                } else {
                     false
                 }
-                if (sent) {
-                    // Ensure unread badge is cleared for this peer immediately
-                    try {
-                        val current = state.getUnreadPrivateMessagesValue().toMutableSet()
-                        if (current.remove(senderPeerID)) {
-                            state.setUnreadPrivateMessages(current)
-                        }
-                    } catch (_: Exception) { }
-                }
-            } else {
-                android.util.Log.d("MeshDelegateHandler", "Skipping read receipt - chat not focused (background: $isAppInBackground, current peer: $currentPrivateChatPeer, sender: $senderPeerID)")
+            } catch (_: Exception) {
+                false
             }
+            if (sent) {
+                // Ensure unread badge is cleared for this peer immediately
+                try {
+                    val current = state.getUnreadPrivateMessagesValue().toMutableSet()
+                    if (current.remove(senderPeerID)) {
+                        state.setUnreadPrivateMessages(current)
+                    }
+                } catch (_: Exception) { }
+            }
+        } else {
+            android.util.Log.d("MeshDelegateHandler", "Skipping read receipt - chat not focused (background: $isAppInBackground, current peer: $currentPrivateChatPeer, sender: $senderPeerID)")
         }
-    
+    }
+
     // registerPeerPublicKey REMOVED - fingerprints now handled centrally in PeerManager
 
     /**

@@ -17,7 +17,7 @@ class BitchatApplication : Application() {
         try {
             val torProvider = ArtiTorManager.getInstance()
             torProvider.init(this)
-        } catch (_: Exception){}
+        } catch (_: Throwable){}
 
         // Initialize relay directory (loads assets/nostr_relays.csv)
         RelayDirectory.initialize(this)

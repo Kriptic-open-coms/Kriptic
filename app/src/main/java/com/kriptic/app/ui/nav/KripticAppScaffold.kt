@@ -96,11 +96,12 @@ fun KripticAppScaffold(chatViewModel: ChatViewModel) {
         // docs/01_ARCHITECTURE.md §2 ("no coming-soon, everything real and
         // on by default") — no manual "join #general" step for the user.
         com.kriptic.app.mesh.ChannelRegistry.joinAllDefaults { channelId ->
-            chatViewModel.joinChannel(channelId)
+            val joined = chatViewModel.joinChannel(channelId)
+            android.util.Log.d("KripticDebug", "JOIN channel=$channelId result=$joined myPeerID=${chatViewModel.myPeerID}")
         }
         com.kriptic.app.mesh.KripticBridgeHolder.handler = { message ->
             markerBridge.handleIncomingMessage(message) ||
-                sosTrigger.handleIncomingMessage(message) { payload -> activeSos = payload }
+                    sosTrigger.handleIncomingMessage(message) { payload -> activeSos = payload }
         }
     }
 

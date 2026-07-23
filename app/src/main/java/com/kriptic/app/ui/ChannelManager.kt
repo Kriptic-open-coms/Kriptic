@@ -170,8 +170,7 @@ class ChannelManager(
         onEncryptedPayload: (ByteArray) -> Unit,
         onFallback: () -> Unit
     ) {
-        // TODO: REIMPLEMENT – REMOVED FOR NOW
-        return
+        onFallback()
     }
     
     // MARK: - Channel Management
