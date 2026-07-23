@@ -1,0 +1,10 @@
+# Large / regenerable build inputs and caches
+input/*.osm.pbf
+input/*.pbf
+planetiler-sources/**
+!planetiler-sources/README.txt
+# Built tiles are shipped from app/src/main/assets/map/ (Git LFS), not map-data/out/
+out/*.pmtiles
+data/
+logs/*.log
+tmp/
