@@ -1,4 +1,4 @@
-# map-data
+# Delhi NCR offline map tiles
 
 Build pipeline that produces `delhi_ncr.pmtiles`, the offline vector tile bundle shipped inside the APK at `app/src/main/assets/map/`.
 
@@ -23,7 +23,9 @@ This directory is tooling + provenance — the APK consumes the copied `.pmtiles
 
 
 
-## Regenerating the bundle
+```
+osmium extract -b 76.8,28.3,77.7,28.9 india-latest.osm.pbf -o delhi_ncr.osm.pbf
+```
 
 ```bash
 cd map-data
